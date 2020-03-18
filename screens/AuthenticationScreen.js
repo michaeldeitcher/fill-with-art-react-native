@@ -8,8 +8,11 @@ import { RectButton, ScrollView } from 'react-native-gesture-handler';
 
 export default function AuthenticationScreen({login}) {
     const [username, setUsername] = useState('')
+    const [usernameError, setUsernameError] = useState('')
     const [email, setEmail] = useState('')
+    const [emailError, setEmailError] = useState('')
     const [password, setPassword] = useState('')
+    const [passwordError, setPasswordError] = useState('')
     const [isSignIn, setIsSignIn] = useState(true)
     const [isPending, setIsPending] = useState(false)
 
@@ -100,6 +103,27 @@ export default function AuthenticationScreen({login}) {
         });
     }
 
+    const clearErrors = () => {
+        setUsernameError('')
+        setEmailError('')
+        setPasswordError('')
+    }
+
+    const handleError = response => {
+        response.json().then( data => {
+            clearErrors()
+            if(data.errors.length) {
+                data.errors.forEach( (error) => {
+                    if(error.source.pointer === "/data/attributes/username")
+                        setUsernameError(error.detail)
+                    if(error.source.pointer === "/data/attributes/email")
+                        setEmailError(error.detail)
+                    if(error.source.pointer === "/data/attributes/password")
+                        setPasswordError(error.detail)
+                })
+            }
+        });
+    }
 
     return (
         <View style={{
@@ -109,16 +133,20 @@ export default function AuthenticationScreen({login}) {
             paddingTop: 40
         }}>
             <View style={styles.section}>
-                <Text style={Object.assign(isSignIn ? {fontWeight: 'bold'} : {}, {padding: 40})} onPress={() => setIsSignIn(true)}>Sign In</Text>
+                <Text style={Object.assign(isSignIn ? {fontWeight: 'bold'} : {}, {padding: 40})} onPress={() => {clearErrors(); setIsSignIn(true)}}>Sign In</Text>
                 <Text style={Object.assign(isSignIn ? {} : {fontWeight: 'bold'}, {padding: 40})} onPress={() => setIsSignIn(false)}>Sign Up</Text>
             </View>
             {!isSignIn &&
-            <TextInput style={{height: 40, width: 200}}
-                       placeholder="Username"
-                       onChangeText={(username) => setUsername(username)}
-                       value={username}
-            />
+                <View>
+                    <TextInput style={{height: 40, width: 200}}
+                               placeholder="Username"
+                               onChangeText={(username) => setUsername(username)}
+                               value={username}
+                    />
+                    <Text style={styles.errorText}>{usernameError}</Text>
+                </View>
             }
+
             <TextInput style={{height: 40, width: 200}}
                 placeholder="Email"
                 onChangeText={(email) => setEmail(email)}
@@ -126,12 +154,15 @@ export default function AuthenticationScreen({login}) {
                 autoCompleteType='email'
                 keyboardType='email-address'
             />
+            <Text style={styles.errorText}>{emailError}</Text>
+
             <TextInput style={{height: 40, width: 200}}
                        placeholder="Password"
                        onChangeText={(password) => setPassword(password)}
                        value={password}
                        secureTextEntry={true}
             />
+            <Text style={styles.errorText}>{passwordError}</Text>
 
             <TouchableHighlight style={[styles.buttonContainer, styles.loginButton]} onPress={() => handleSubmit()}>
                 <Text style={styles.loginText}>{isPending ? 'Submitting' : 'Submit'}</Text>
@@ -176,7 +207,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom:20,
+        marginTop:20,
         width:250,
         borderRadius:30,
     },
@@ -185,6 +216,9 @@ const styles = StyleSheet.create({
     },
     loginText: {
         color: 'white',
+    },
+    errorText: {
+        color: 'red'
     }
 
 });
